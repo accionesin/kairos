@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Kairos Face Demo</title>
+</head>
+<body>
+
+<h2>Demo Kairos – Web Tools LA</h2>
+<button id="btn">Detectar rostro</button>
+
+<pre id="output"></pre>
+
+<script>
+document.getElementById("btn").addEventListener("click", async () => {
+
+  document.getElementById("output").textContent = "Procesando...";
+
+  try {
+    const response = await fetch("https://api.kairos.com/detect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "app_id": "TU_APP_ID",
+        "app_key": "TU_APP_KEY"
+      },
+      body: JSON.stringify({
+        image: "https://media.kairos.com/liz.jpg"
+      })
+    });
+
+    const data = await response.json();
+    document.getElementById("output").textContent =
+      JSON.stringify(data, null, 2);
+
+  } catch (e) {
+    document.getElementById("output").textContent = "Error: " + e;
+  }
+
+});
+</script>
+
+</body>
+</html>
