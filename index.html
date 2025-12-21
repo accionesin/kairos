@@ -2,39 +2,60 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Web Tools LA – Kairos</title>
+  <title>Kairos – Test Frontend</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      margin-top: 15px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
 </head>
 <body>
 
-  <h2>Detección de rostro (demo)</h2>
+  <h1>Kairos – Prueba de conexión</h1>
 
-  <button onclick="detectar()">Detectar rostro</button>
+  <button id="detectBtn">Probar Worker</button>
 
-  <pre id="resultado"></pre>
+  <pre id="result">Esperando acción...</pre>
 
   <script>
-    async function detectar() {
-      const resultado = document.getElementById("resultado");
-      resultado.textContent = "Procesando...";
-
+    document.getElementById("detectBtn").addEventListener("click", async () => {
       try {
-        const response = await fetch("https://kairos.clubempx.workers.dev", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            image: "https://media.kairos.com/liz.jpg"
-          })
-        });
+        const response = await fetch(
+          "https://kairos.clubempx.workers.dev/",
+          {
+            method: "GET"
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
 
         const data = await response.json();
-        resultado.textContent = JSON.stringify(data, null, 2);
+
+        document.getElementById("result").textContent =
+          JSON.stringify(data, null, 2);
 
       } catch (error) {
-        resultado.textContent = "Error: " + error.message;
+        document.getElementById("result").textContent =
+          "Error: " + error.message;
+        console.error(error);
       }
-    }
+    });
   </script>
 
 </body>
