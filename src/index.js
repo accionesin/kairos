@@ -1,10 +1,10 @@
 export default {
-  async fetch() {
+  async fetch(request) {
     return new Response(
       JSON.stringify({
         ok: true,
-        service: "Kairos",
-        status: "Worker operativo 🚀"
+        message: "Kairos Worker activo",
+        time: new Date().toISOString()
       }),
       {
         headers: {
@@ -12,6 +12,6 @@ export default {
           "access-control-allow-origin": "*"
         }
       }
-    )
+    );
   }
-}
+};
