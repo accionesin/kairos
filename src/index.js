@@ -1,10 +1,10 @@
 export default {
-  async fetch(request) {
+  async fetch() {
     return new Response(
       JSON.stringify({
-        status: "ok",
-        message: "Kairos Worker activo 🚀",
-        source: "Cloudflare Workers"
+        ok: true,
+        service: "Kairos",
+        status: "Worker operativo 🚀"
       }),
       {
         headers: {
