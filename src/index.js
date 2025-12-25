@@ -1,82 +1,87 @@
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
 
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Content-Type": "application/json"
-    };
-
-    // Preflight CORS
+    // CORS
     if (request.method === "OPTIONS") {
       return new Response(null, {
-        status: 204,
-        headers: corsHeaders
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
       });
     }
 
     // Health check
-    if (request.method === "GET") {
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          message: "Kairos Worker activo",
-          time: new Date().toISOString()
-        }),
-        { status: 200, headers: corsHeaders }
-      );
+    if (url.pathname === "/") {
+      return json({
+        ok: true,
+        message: "Kairos Worker activo",
+        time: new Date().toISOString()
+      });
     }
 
-    // Solo POST
-    if (request.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Only POST allowed" }),
-        { status: 405, headers: corsHeaders }
-      );
+    // DETECT
+    if (url.pathname === "/detect" && request.method === "POST") {
+      const body = await request.json();
+      return callKairos("detect", body, env);
     }
 
-    try {
+    // ENROLL
+    if (url.pathname === "/enroll" && request.method === "POST") {
       const body = await request.json();
 
-      if (!body.image) {
-        return new Response(
-          JSON.stringify({ error: "Missing image URL" }),
-          { status: 400, headers: corsHeaders }
-        );
+      // Protección básica del plan free
+      const today = new Date().toISOString().slice(0, 10);
+      const key = `enroll_${today}`;
+      const count = Number(await env.KV.get(key)) || 0;
+
+      if (count >= 20) {
+        return json({
+          ok: false,
+          error: "Límite diario de registros alcanzado (20)"
+        }, 429);
       }
 
-      // 🔥 LLAMADA REAL A KAIROS (DETECT)
-      const kairosResponse = await fetch(
-        "https://api.kairos.com/detect",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "app_id": env.KAIROS_APP_ID,
-            "app_key": env.KAIROS_APP_KEY
-          },
-          body: JSON.stringify({
-            image: body.image
-          })
-        }
-      );
+      // Incrementa contador
+      await env.KV.put(key, count + 1);
 
-      const kairosData = await kairosResponse.json();
-
-      return new Response(
-        JSON.stringify(kairosData),
-        { status: 200, headers: corsHeaders }
-      );
-
-    } catch (err) {
-      return new Response(
-        JSON.stringify({
-          error: "Worker error",
-          detail: err.message
-        }),
-        { status: 500, headers: corsHeaders }
-      );
+      return callKairos("enroll", {
+        image: body.image,
+        subject_id: body.subject_id,
+        gallery_name: "acciones.in"
+      }, env);
     }
+
+    return new Response("Not found", { status: 404 });
   }
 };
+
+// =====================
+
+async function callKairos(endpoint, payload, env) {
+  const res = await fetch(`https://api.kairos.com/${endpoint}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "app_id": env.KAIROS_APP_ID,
+      "app_key": env.KAIROS_APP_KEY
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  return json(data, res.status);
+}
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
