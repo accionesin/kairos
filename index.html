@@ -2,82 +2,65 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Kairos – Demo Face Detect</title>
+  <title>Kairos – Demo Free</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
     body {
       margin: 0;
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       background: radial-gradient(circle at top, #0f172a, #020617);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      color: #e5e7eb;
-      padding: 20px;
+      font-family: system-ui, sans-serif;
+      color: white;
     }
 
     .card {
       background: #020617;
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 32px;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-      border: 1px solid #1e293b;
+      box-shadow: 0 0 40px rgba(0,0,0,0.6);
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       font-weight: 500;
-      letter-spacing: 0.4px;
     }
 
     input {
       width: 100%;
-      padding: 14px;
-      border-radius: 10px;
+      padding: 12px;
+      border-radius: 8px;
       border: none;
       margin-bottom: 16px;
       font-size: 14px;
-      outline: none;
     }
 
     button {
       width: 100%;
-      padding: 14px;
-      border-radius: 10px;
+      padding: 12px;
+      border-radius: 8px;
       border: none;
       background: #2563eb;
       color: white;
       font-size: 15px;
       cursor: pointer;
-      transition: background 0.2s ease;
     }
 
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    #result {
-      margin-top: 24px;
+    pre {
+      margin-top: 20px;
       background: #020617;
       border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 16px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .label {
-      color: #93c5fd;
-      font-weight: 500;
-    }
-
-    .error {
-      color: #fca5a5;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      max-height: 260px;
+      overflow: auto;
     }
   </style>
 </head>
@@ -95,7 +78,7 @@
 
     <button id="btn">Detectar rostro</button>
 
-    <div id="result">Ingresa una URL de imagen y presiona el botón.</div>
+    <pre id="result">{}</pre>
   </div>
 
   <script>
@@ -104,15 +87,15 @@
       const output = document.getElementById("result");
 
       if (!imageUrl) {
-        output.innerHTML = "<span class='error'>⚠️ Ingresa una URL válida</span>";
+        output.textContent = "⚠️ Ingresa una URL válida";
         return;
       }
 
-      output.textContent = "Procesando imagen...";
+      output.textContent = "Procesando...";
 
       try {
         const res = await fetch(
-          "https://kairos.clubempx.workers.dev",
+          "https://kairos.clubempx.workers.dev/detect",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -121,34 +104,10 @@
         );
 
         const data = await res.json();
-
-        if (
-          !data.images ||
-          !data.images[0] ||
-          !data.images[0].faces ||
-          data.images[0].faces.length === 0
-        ) {
-          output.innerHTML = "<span class='error'>❌ No se detectó ningún rostro</span>";
-          return;
-        }
-
-        const face = data.images[0].faces[0];
-
-        const gender =
-          face.attributes.gender.type === "M"
-            ? "Masculino"
-            : "Femenino";
-
-        output.innerHTML = `
-          <div>
-            <div><span class="label">Edad estimada:</span> ${face.attributes.age} años</div>
-            <div><span class="label">Género:</span> ${gender}</div>
-            <div><span class="label">Confianza:</span> ${(face.confidence * 100).toFixed(1)}%</div>
-          </div>
-        `;
+        output.textContent = JSON.stringify(data, null, 2);
 
       } catch (e) {
-        output.innerHTML = "<span class='error'>❌ Error al conectar con el servicio</span>";
+        output.textContent = "❌ Error al conectar con el Worker";
       }
     };
   </script>
