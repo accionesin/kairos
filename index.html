@@ -61,13 +61,6 @@
       font-size: 0.85em;
       opacity: 0.7;
     }
-
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 15px;
-      border: 1px solid #1e293b;
-    }
   </style>
 </head>
 <body>
@@ -76,13 +69,11 @@
 
   <div class="card">
     <label>📎 Adjuntar imagen:</label>
-    <input type="file" id="imageFile" accept="image/*" onchange="previewFile()" />
+    <input type="file" id="imageFile" accept="image/*" />
 
     <label>🔗 O URL pública de imagen:</label>
-    <input type="text" id="imageUrl" placeholder="https://..." onblur="previewUrl()" />
+    <input type="text" id="imageUrl" placeholder="https://..." />
     <div class="warning">La URL debe ser pública y accesible</div>
-
-    <img id="preview" style="display:none;" />
 
     <button onclick="analyzeFace()">Analizar rostro</button>
   </div>
@@ -90,33 +81,6 @@
   <div id="result" class="card" style="display:none;"></div>
 
   <script>
-    let currentImagePreview = "";
-
-    function previewFile() {
-      const file = document.getElementById("imageFile").files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        currentImagePreview = reader.result;
-        showPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function previewUrl() {
-      const url = document.getElementById("imageUrl").value.trim();
-      if (!url) return;
-      currentImagePreview = url;
-      showPreview(url);
-    }
-
-    function showPreview(src) {
-      const img = document.getElementById("preview");
-      img.src = src;
-      img.style.display = "block";
-    }
-
     async function analyzeFace() {
       const fileInput = document.getElementById("imageFile");
       const urlInput = document.getElementById("imageUrl").value.trim();
@@ -164,8 +128,6 @@
 
       resultDiv.innerHTML = `
         <div class="ok">✅ Rostro detectado correctamente</div>
-
-        <img src="${currentImagePreview}" />
 
         <div class="section">
           <div class="section-title">* Percepción general</div>
