@@ -2,142 +2,167 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Kairos – Face Detect Demo</title>
+  <title>Acciones.in – Detección de in-prendedores</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: #e5e7eb;
-      display: flex;
-      justify-content: center;
-      padding: 40px;
+      padding: 30px;
+      max-width: 720px;
+      margin: auto;
     }
-
-    .card {
-      background: #020617;
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 420px;
-      width: 100%;
-      box-shadow: 0 10px 30px rgba(0,0,0,.4);
-    }
-
     h1 {
-      margin-top: 0;
-      font-size: 22px;
+      color: #38bdf8;
     }
-
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 12px;
-      border-radius: 8px;
-      border: none;
-      font-size: 14px;
-    }
-
-    input {
+    .box {
       background: #020617;
-      color: #fff;
-      border: 1px solid #334155;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
-
-    button {
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
+    label {
+      display: block;
+      margin-top: 15px;
       font-weight: bold;
     }
-
-    button:hover {
-      background: #1d4ed8;
+    input[type="text"],
+    input[type="file"],
+    button {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
     }
-
-    .result {
-      margin-top: 20px;
-      padding: 16px;
+    input[type="text"] {
       background: #020617;
-      border-radius: 8px;
+      color: #e5e7eb;
       border: 1px solid #334155;
     }
-
+    button {
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0ea5e9;
+    }
+    .note {
+      font-size: 0.9em;
+      color: #94a3b8;
+      margin-top: 5px;
+    }
+    #preview {
+      margin-top: 15px;
+      max-width: 100%;
+      border-radius: 6px;
+      display: none;
+    }
+    #result {
+      margin-top: 20px;
+      background: #020617;
+      padding: 15px;
+      border-radius: 6px;
+    }
     .ok {
       color: #22c55e;
       font-weight: bold;
     }
-
     .error {
       color: #ef4444;
       font-weight: bold;
     }
   </style>
 </head>
-
 <body>
-  <div class="card">
-    <h1>🔍 Kairos – Detección Facial</h1>
 
-    <input
-      id="imageUrl"
-      type="text"
-      placeholder="URL pública de una imagen"
-      value="https://media.kairos.com/liz.jpg"
-    />
+  <h1>🔍 Acciones.in – Detección de in-prendedores</h1>
 
-    <button onclick="detectar()">Probar detección</button>
-
-    <div id="resultado" class="result"></div>
+  <div class="box">
+    <h3>Opción 1: Adjuntar imagen</h3>
+    <input type="file" id="fileInput" accept="image/*" />
+    <div class="note">Imagen JPG o PNG, tamaño moderado recomendado.</div>
   </div>
 
-  <script>
-    async function detectar() {
-      const imageUrl = document.getElementById("imageUrl").value;
-      const resultado = document.getElementById("resultado");
+  <div class="box">
+    <h3>Opción 2: URL pública de imagen</h3>
+    <input type="text" id="imageUrl" placeholder="https://ejemplo.com/imagen.jpg" />
+    <div class="note">⚠️ La imagen debe ser pública y accesible sin login.</div>
+  </div>
 
-      resultado.innerHTML = "⏳ Analizando imagen...";
+  <button onclick="sendToWorker()">Analizar rostro</button>
+
+  <img id="preview" />
+
+  <div id="result"></div>
+
+  <script>
+    const WORKER_URL = "https://kairos.clubempx.workers.dev/";
+
+    function sendToWorker() {
+      const fileInput = document.getElementById("fileInput");
+      const imageUrl = document.getElementById("imageUrl").value.trim();
+      const resultDiv = document.getElementById("result");
+      const preview = document.getElementById("preview");
+
+      resultDiv.innerHTML = "⏳ Analizando imagen...";
+      preview.style.display = "none";
+
+      if (fileInput.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = function () {
+          preview.src = reader.result;
+          preview.style.display = "block";
+          postImage({ image: reader.result });
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+        return;
+      }
+
+      if (imageUrl) {
+        preview.src = imageUrl;
+        preview.style.display = "block";
+        postImage({ image: imageUrl });
+        return;
+      }
+
+      resultDiv.innerHTML = "<span class='error'>❌ Debes adjuntar una imagen o ingresar una URL.</span>";
+    }
+
+    function postImage(payload) {
+      fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => renderResult(data))
+      .catch(() => {
+        document.getElementById("result").innerHTML =
+          "<span class='error'>❌ Error al conectar con el servicio.</span>";
+      });
+    }
+
+    function renderResult(data) {
+      const resultDiv = document.getElementById("result");
 
       try {
-        const response = await fetch(
-          "https://kairos.clubempx.workers.dev",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: imageUrl })
-          }
-        );
-
-        const data = await response.json();
-
-        if (!data.images || !data.images[0]?.faces?.length) {
-          resultado.innerHTML =
-            "<span class='error'>❌ No se detectó ningún rostro</span>";
-          return;
-        }
-
         const face = data.images[0].faces[0];
-
-        const edad = face.attributes.age;
-        const genero =
-          face.attributes.gender.type === "M"
-            ? "Masculino"
-            : "Femenino";
-
-        const confianza = Math.round(face.confidence * 100);
-
-        resultado.innerHTML = `
-          <div class="ok">✅ Rostro detectado correctamente</div>
-          <p><strong>Edad estimada:</strong> ${edad} años</p>
-          <p><strong>Género:</strong> ${genero}</p>
-          <p><strong>Confianza:</strong> ${confianza}%</p>
+        resultDiv.innerHTML = `
+          <p class="ok">✅ Rostro detectado correctamente</p>
+          <p><strong>Edad estimada:</strong> ${face.attributes.age} años</p>
+          <p><strong>Género:</strong> ${face.attributes.gender.type === "M" ? "Masculino" : "Femenino"}</p>
+          <p><strong>Confianza:</strong> ${(face.confidence * 100).toFixed(2)}%</p>
         `;
-      } catch (error) {
-        resultado.innerHTML =
-          "<span class='error'>❌ Error al conectar con el servicio</span>";
-        console.error(error);
+      } catch (e) {
+        resultDiv.innerHTML =
+          "<span class='error'>❌ No se detectó ningún rostro en la imagen.</span>";
       }
     }
   </script>
+
 </body>
 </html>
