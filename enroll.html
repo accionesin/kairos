@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>🧠 Acciones.in – Registro Facial</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(56,189,248,0.15);
+    }
+
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    img {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+    }
+
+    .ok { color: #22c55e; font-weight: bold; }
+    .warn { color: #facc15; }
+    .err { color: #ef4444; }
+  </style>
+</head>
+
+<body>
+
+<h1>🧠 Acciones.in – Registro Facial</h1>
+
+<div class="card">
+  <label>📎 Adjuntar imagen:</label>
+  <input type="file" id="imageFile" accept="image/*">
+
+  <label>🔗 O URL pública:</label>
+  <input type="text" id="imageUrl" placeholder="https://...">
+
+  <button onclick="analyze()">Analizar para registro</button>
+
+  <img id="preview" style="display:none;">
+</div>
+
+<div id="step2" class="card" style="display:none;">
+  <div class="ok">✅ Este es el rostro que vamos a registrar</div>
+
+  <label>Nombre y Apellido:</label>
+  <input type="text" id="fullName" placeholder="Juan Pérez">
+
+  <button onclick="enroll()">Registrar rostro</button>
+</div>
+
+<div id="result" class="card" style="display:none;"></div>
+
+<script>
+let imagePayload = "";
+let faceConfidence = 0;
+
+async function analyze() {
+  const file = document.getElementById("imageFile").files[0];
+  const url = document.getElementById("imageUrl").value.trim();
+  const result = document.getElementById("result");
+
+  result.style.display = "block";
+  result.innerHTML = "⏳ Analizando imagen...";
+
+  if (file) {
+    imagePayload = await toBase64(file);
+    showPreview(URL.createObjectURL(file));
+  } else if (url) {
+    imagePayload = url;
+    showPreview(url);
+  } else {
+    result.innerHTML = "⚠️ Debes adjuntar imagen o URL.";
+    return;
+  }
+
+  const res = await fetch("https://kairos.clubempx.workers.dev/detect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: imagePayload })
+  });
+
+  const data = await res.json();
+
+  if (!data.images || data.images[0].faces.length !== 1) {
+    result.innerHTML = "❌ Debe haber exactamente un rostro.";
+    return;
+  }
+
+  const face = data.images[0].faces[0];
+  faceConfidence = face.confidence;
+
+  if (faceConfidence < 0.8) {
+    result.innerHTML = "⚠️ Confianza insuficiente para registrar.";
+    return;
+  }
+
+  result.innerHTML = `Confianza detectada: ${(faceConfidence * 100).toFixed(2)}%`;
+  document.getElementById("step2").style.display = "block";
+}
+
+async function enroll() {
+  const name = document.getElementById("fullName").value.trim();
+  const result = document.getElementById("result");
+
+  if (!name) {
+    result.innerHTML = "⚠️ Ingresa nombre y apellido.";
+    return;
+  }
+
+  const subjectId = name.replace(/\s+/g, "") + "_" + Math.floor(Math.random() * 1000);
+
+  result.innerHTML = "⏳ Registrando rostro...";
+
+  const res = await fetch("https://kairos.clubempx.workers.dev/enroll", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      image: imagePayload,
+      subject_id: subjectId
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.Errors) {
+    result.innerHTML = "❌ Error al registrar rostro.";
+    return;
+  }
+
+  result.innerHTML = `
+    <div class="ok">✅ Rostro registrado correctamente</div>
+    Nombre: ${name}<br>
+    ID asignado: ${subjectId}<br>
+    Galería: acciones.in
+  `;
+}
+
+function showPreview(src) {
+  const img = document.getElementById("preview");
+  img.src = src;
+  img.style.display = "block";
+}
+
+function toBase64(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+
+</body>
+</html>
