@@ -178,7 +178,39 @@ export default {
 
         return new Response(await r.text(), { status: 200, headers: corsHeaders });
       }
+// ======================================================
+// 👤 GALLERY VIEW SUBJECT (detalle de un rostro)
+// ======================================================
+if (path === "/gallery_view_subject") {
+  const body = await request.json();
 
+  if (!body.gallery_name || !body.subject_id) {
+    return new Response(
+      JSON.stringify({
+        error: "Missing gallery_name or subject_id"
+      }),
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const r = await fetch("https://api.kairos.com/gallery/view_subject", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "app_id": env.KAIROS_APP_ID,
+      "app_key": env.KAIROS_APP_KEY
+    },
+    body: JSON.stringify({
+      gallery_name: body.gallery_name,
+      subject_id: body.subject_id
+    })
+  });
+
+  return new Response(await r.text(), {
+    status: 200,
+    headers: corsHeaders
+  });
+}
       // ======================================================
       // ❌ Endpoint no reconocido
       // ======================================================
