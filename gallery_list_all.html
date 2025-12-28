@@ -2,8 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>📂 Acciones.in – Galerías registradas</title>
-
+  <title>🗂️ Acciones.in – Galerías Registradas</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,15 +24,14 @@
     }
 
     button {
-      margin-top: 15px;
-      padding: 10px;
-      width: 100%;
-      border-radius: 6px;
-      border: none;
       background: #38bdf8;
       color: #020617;
       font-weight: bold;
       cursor: pointer;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
     }
 
     button:hover {
@@ -60,34 +58,20 @@
     }
 
     .error {
-      color: #ef4444;
+      color: #f87171;
       font-weight: bold;
-    }
-
-    .hint {
-      margin-top: 10px;
-      font-size: 0.85em;
-      opacity: 0.75;
     }
   </style>
 </head>
-
 <body>
 
-  <h1>📂 Acciones.in – Galerías registradas</h1>
+  <h1>🗂️ Acciones.in – Galerías Registradas</h1>
 
   <div class="card">
-    <p>Este módulo consulta todas las galerías existentes en Kairos.</p>
-
-    <button onclick="loadGalleries()">🔄 Cargar galerías</button>
-
-    <div id="result" class="card" style="display:none;"></div>
-
-    <div class="hint">
-      Las galerías se crean automáticamente al hacer enroll.<br>
-      Ejemplo esperable: <b>acciones.in</b>
-    </div>
+    <button onclick="loadGalleries()">📡 Consultar galerías</button>
   </div>
+
+  <div id="result" class="card" style="display:none;"></div>
 
   <script>
     async function loadGalleries() {
@@ -98,7 +82,10 @@
       try {
         const response = await fetch(
           "https://kairos.clubempx.workers.dev/gallery_list_all",
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          }
         );
 
         const data = await response.json();
@@ -106,25 +93,24 @@
         if (!data.gallery_ids || data.gallery_ids.length === 0) {
           resultDiv.innerHTML = `
             <div class="warn">⚠️ No hay galerías registradas</div>
-            <p>Registra al menos un rostro usando <b>enroll</b>.</p>
+            <p>Registra al menos un rostro usando <strong>enroll</strong>.</p>
           `;
           return;
         }
 
-        let list = "<ul>";
-        data.gallery_ids.forEach(gallery => {
-          list += `<li>📁 ${gallery}</li>`;
-        });
-        list += "</ul>";
+        let html = `<div class="ok">✅ Galerías encontradas:</div><ul>`;
 
-        resultDiv.innerHTML = `
-          <div class="ok">✅ Galerías encontradas (${data.gallery_ids.length})</div>
-          ${list}
-        `;
+        data.gallery_ids.forEach(name => {
+          html += `<li>📁 ${name}</li>`;
+        });
+
+        html += "</ul>";
+        resultDiv.innerHTML = html;
 
       } catch (err) {
         resultDiv.innerHTML = `
           <div class="error">❌ Error al consultar galerías</div>
+          <p>${err.message}</p>
         `;
       }
     }
