@@ -63,10 +63,10 @@
 <h1>📁👥 AiDi – Identidades Digitales</h1>
 
 <div class="card">
-  <label>Nombre de la galería:</label>
+  <label>Nombre de la comunidad:</label>
   <input type="text" id="galleryName" value="acciones.in">
 
-  <button onclick="viewGallery()">Consultar galería</button>
+  <button onclick="viewGallery()">Consultar Comunidad</button>
 </div>
 
 <div id="result" class="card" style="display:none;"></div>
@@ -77,10 +77,10 @@ async function viewGallery() {
   const result = document.getElementById("result");
 
   result.style.display = "block";
-  result.innerHTML = "⏳ Consultando galería...";
+  result.innerHTML = "⏳ Consultando comunidad...";
 
   if (!galleryName) {
-    result.innerHTML = "<div class='warn'>⚠️ Debes ingresar el nombre de la galería.</div>";
+    result.innerHTML = "<div class='warn'>⚠️ Debes ingresar el nombre de la comunidad.</div>";
     return;
   }
 
@@ -94,7 +94,7 @@ async function viewGallery() {
     const data = await res.json();
 
     if (data.Errors) {
-      result.innerHTML = "<div class='err'>❌ Error al consultar la galería.</div>";
+      result.innerHTML = "<div class='err'>❌ Error al consultar la comunidad.</div>";
       return;
     }
 
@@ -102,8 +102,8 @@ async function viewGallery() {
 
     if (subjects.length === 0) {
       result.innerHTML = `
-        <div class="warn">⚠️ La galería está vacía.</div>
-        <p>No hay rostros registrados aún.</p>
+        <div class="warn">⚠️ La comunidad está vacía.</div>
+        <p>No hay identidades digitales registradas aún.</p>
       `;
       return;
     }
@@ -111,9 +111,9 @@ async function viewGallery() {
     let list = subjects.map(s => `<li>👤 ${s}</li>`).join("");
 
     result.innerHTML = `
-      <div class="ok">✅ Galería encontrada</div>
-      <p><strong>Galería:</strong> ${galleryName}</p>
-      <p><strong>Rostros registrados:</strong></p>
+      <div class="ok">✅ Comunidad encontrada</div>
+      <p><strong>Comunidad:</strong> ${galleryName}</p>
+      <p><strong>Identidad Digital registrada:</strong></p>
       <ul>${list}</ul>
     `;
 
