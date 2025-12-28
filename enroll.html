@@ -12,9 +12,7 @@
       padding: 40px;
     }
 
-    h1 {
-      color: #38bdf8;
-    }
+    h1 { color: #38bdf8; }
 
     .card {
       background: #020617;
@@ -39,9 +37,7 @@
       cursor: pointer;
     }
 
-    button:hover {
-      background: #0ea5e9;
-    }
+    button:hover { background: #0ea5e9; }
 
     img {
       max-width: 100%;
@@ -67,29 +63,29 @@
   <label>🔗 O URL pública:</label>
   <input type="text" id="imageUrl" placeholder="https://...">
 
-  <button onclick="analyze()">Analizar para registro</button>
+  <button onclick="analyze()">Analizar imagen</button>
 
   <img id="preview" style="display:none;">
 </div>
 
 <div id="step2" class="card" style="display:none;">
-  <div class="ok">✅ Este es el rostro que vamos a registrar</div>
+  <div class="ok">✅ Rostro válido para registro</div>
 
   <label>Nombre y Apellido:</label>
   <input type="text" id="fullName" placeholder="Juan Pérez">
 
-  <button onclick="enroll()">Registrar rostro</button>
+  <button onclick="enrollFace()">Registrar rostro</button>
 </div>
 
 <div id="result" class="card" style="display:none;"></div>
 
 <script>
+const GALLERY_NAME = "acciones.in";
 let imagePayload = "";
-let faceConfidence = 0;
 
 async function analyze() {
   const file = document.getElementById("imageFile").files[0];
-  const url = document.getElementById("imageUrl").value.trim();
+  const url  = document.getElementById("imageUrl").value.trim();
   const result = document.getElementById("result");
 
   result.style.display = "block";
@@ -102,7 +98,7 @@ async function analyze() {
     imagePayload = url;
     showPreview(url);
   } else {
-    result.innerHTML = "⚠️ Debes adjuntar imagen o URL.";
+    result.innerHTML = "⚠️ Debes adjuntar una imagen o una URL.";
     return;
   }
 
@@ -114,24 +110,23 @@ async function analyze() {
 
   const data = await res.json();
 
-  if (!data.images || data.images[0].faces.length !== 1) {
-    result.innerHTML = "❌ Debe haber exactamente un rostro.";
+  if (!data.images || !data.images[0].faces || data.images[0].faces.length !== 1) {
+    result.innerHTML = "❌ Debe haber exactamente un rostro visible.";
     return;
   }
 
-  const face = data.images[0].faces[0];
-  faceConfidence = face.confidence;
+  const confidence = data.images[0].faces[0].confidence;
 
-  if (faceConfidence < 0.8) {
+  if (confidence < 0.8) {
     result.innerHTML = "⚠️ Confianza insuficiente para registrar.";
     return;
   }
 
-  result.innerHTML = `Confianza detectada: ${(faceConfidence * 100).toFixed(2)}%`;
+  result.innerHTML = `Confianza detectada: ${(confidence * 100).toFixed(2)} %`;
   document.getElementById("step2").style.display = "block";
 }
 
-async function enroll() {
+async function enrollFace() {
   const name = document.getElementById("fullName").value.trim();
   const result = document.getElementById("result");
 
@@ -140,7 +135,10 @@ async function enroll() {
     return;
   }
 
-  const subjectId = name.replace(/\s+/g, "") + "_" + Math.floor(Math.random() * 1000);
+  const subjectId =
+    name.replace(/\s+/g, "_").toLowerCase() +
+    "_" +
+    Math.floor(Math.random() * 1000);
 
   result.innerHTML = "⏳ Registrando rostro...";
 
@@ -149,7 +147,8 @@ async function enroll() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       image: imagePayload,
-      subject_id: subjectId
+      subject_id: subjectId,
+      gallery_name: GALLERY_NAME
     })
   });
 
@@ -162,9 +161,9 @@ async function enroll() {
 
   result.innerHTML = `
     <div class="ok">✅ Rostro registrado correctamente</div>
-    Nombre: ${name}<br>
-    ID asignado: ${subjectId}<br>
-    Galería: acciones.in
+    <p><strong>Nombre:</strong> ${name}</p>
+    <p><strong>ID:</strong> ${subjectId}</p>
+    <p><strong>Galería:</strong> ${GALLERY_NAME}</p>
   `;
 }
 
