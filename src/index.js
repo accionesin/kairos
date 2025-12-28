@@ -212,10 +212,17 @@ if (path === "/gallery_view_subject") {
   });
 }
 // ======================================================
-// 📊 ANALYTICS (uso del sistema)
+// 📊 ANALYTICS (uso del sistema) — FIX DEFINITIVO
 // ======================================================
 if (path === "/analytics") {
-  const body = await request.json();
+
+  let body = null;
+
+  try {
+    body = await request.json();
+  } catch (e) {
+    body = null;
+  }
 
   const r = await fetch("https://api.kairos.com/analytics", {
     method: "POST",
@@ -224,10 +231,15 @@ if (path === "/analytics") {
       "app_id": env.KAIROS_APP_ID,
       "app_key": env.KAIROS_APP_KEY
     },
-    body: JSON.stringify(body || {})
+    body: body && Object.keys(body).length > 0
+      ? JSON.stringify(body)
+      : null
   });
 
-  return new Response(await r.text(), { status: 200, headers: corsHeaders });
+  return new Response(await r.text(), {
+    status: r.status,
+    headers: corsHeaders
+  });
 }
       // ======================================================
       // ❌ Endpoint no reconocido
