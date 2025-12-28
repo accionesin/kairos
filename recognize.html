@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔎 Acciones.in – Reconocimiento Facial</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(56,189,248,0.15);
+    }
+
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 15px;
+      border: 1px solid #1e293b;
+    }
+
+    .ok { color: #22c55e; font-weight: bold; }
+    .error { color: #f87171; font-weight: bold; }
+    .warning { opacity: 0.8; font-size: 0.9em; }
+  </style>
+</head>
+
+<body>
+
+<h1>🔎 Acciones.in – Reconocimiento Facial</h1>
+
+<div class="card">
+  <label>📎 Adjuntar imagen:</label>
+  <input type="file" id="imageFile" accept="image/*" onchange="previewFile()" />
+
+  <label>🔗 O URL pública de imagen:</label>
+  <input type="text" id="imageUrl" placeholder="https://..." onblur="previewUrl()" />
+
+  <div class="warning">La imagen debe contener un solo rostro</div>
+
+  <img id="preview" style="display:none;" />
+
+  <button onclick="recognizeFace()">Reconocer rostro</button>
+</div>
+
+<div id="result" class="card" style="display:none;"></div>
+
+<script>
+  let previewImage = "";
+
+  function previewFile() {
+    const file = document.getElementById("imageFile").files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      previewImage = reader.result;
+      showPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function previewUrl() {
+    const url = document.getElementById("imageUrl").value.trim();
+    if (!url) return;
+    previewImage = url;
+    showPreview(url);
+  }
+
+  function showPreview(src) {
+    const img = document.getElementById("preview");
+    img.src = src;
+    img.style.display = "block";
+  }
+
+  async function recognizeFace() {
+    const resultDiv = document.getElementById("result");
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = "⏳ Reconociendo rostro...";
+
+    let payload;
+
+    const fileInput = document.getElementById("imageFile");
+    const urlInput = document.getElementById("imageUrl").value.trim();
+
+    if (fileInput.files.length > 0) {
+      payload = { image: await toBase64(fileInput.files[0]) };
+    } else if (urlInput) {
+      payload = { image: urlInput };
+    } else {
+      resultDiv.innerHTML = "⚠️ Debes subir una imagen o ingresar una URL.";
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "https://kairos.clubempx.workers.dev/recognize",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const data = await response.json();
+      renderResult(data);
+
+    } catch (err) {
+      resultDiv.innerHTML = "❌ Error al contactar el sistema.";
+    }
+  }
+
+  function renderResult(data) {
+    const resultDiv = document.getElementById("result");
+
+    if (!data.images || !data.images[0].candidates || data.images[0].candidates.length === 0) {
+      resultDiv.innerHTML = `
+        <div class="error">❌ Rostro no reconocido</div>
+        <p>Este rostro no existe en la galería Acciones.in</p>
+        <a href="enroll.html">👉 Registrar este rostro</a>
+      `;
+      return;
+    }
+
+    const best = data.images[0].candidates[0];
+    const confidence = (best.confidence * 100).toFixed(2);
+
+    if (confidence < 80) {
+      resultDiv.innerHTML = `
+        <div class="error">⚠️ Coincidencia insuficiente</div>
+        Confianza: ${confidence} %
+      `;
+      return;
+    }
+
+    resultDiv.innerHTML = `
+      <div class="ok">✅ Rostro reconocido</div>
+      <img src="${previewImage}" />
+      <p><strong>ID:</strong> ${best.subject_id}</p>
+      <p><strong>Confianza:</strong> ${confidence} %</p>
+    `;
+  }
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+</script>
+
+</body>
+</html>
