@@ -92,13 +92,13 @@
 
         if (!data.gallery_ids || data.gallery_ids.length === 0) {
           resultDiv.innerHTML = `
-            <div class="warn">⚠️ No hay galerías registradas</div>
+            <div class="warn">⚠️ No hay comunidades registradas</div>
             <p>Registra al menos un rostro usando <strong>enroll</strong>.</p>
           `;
           return;
         }
 
-        let html = `<div class="ok">✅ Galerías encontradas:</div><ul>`;
+        let html = `<div class="ok">✅ Comunidades encontradas:</div><ul>`;
 
         data.gallery_ids.forEach(name => {
           html += `<li>📁 ${name}</li>`;
@@ -109,7 +109,7 @@
 
       } catch (err) {
         resultDiv.innerHTML = `
-          <div class="error">❌ Error al consultar galerías</div>
+          <div class="error">❌ Error al consultar comunidades</div>
           <p>${err.message}</p>
         `;
       }
