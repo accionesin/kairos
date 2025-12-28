@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Galería de Rostros – Acciones.in</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #22c55e;
+      color: #022c22;
+      border: none;
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    button:hover {
+      background: #16a34a;
+    }
+
+    .box {
+      margin-top: 20px;
+      background: #020617;
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    li {
+      padding: 6px 0;
+      border-bottom: 1px solid #1e293b;
+      font-size: 14px;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .ok {
+      color: #22c55e;
+    }
+
+    .warn {
+      color: #facc15;
+    }
+
+    .error {
+      color: #f87171;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>📂 Galería Facial – Acciones.in</h1>
+  <p>Listado de rostros registrados en el sistema.</p>
+
+  <button onclick="loadGallery()">Cargar galería</button>
+
+  <div class="box">
+    <div id="status" class="status"></div>
+    <ul id="list"></ul>
+  </div>
+
+  <script>
+    const API_URL = "https://kairos.clubempx.workers.dev/gallery/list";
+
+    async function loadGallery() {
+      const status = document.getElementById("status");
+      const list = document.getElementById("list");
+
+      status.textContent = "⏳ Consultando galería...";
+      status.className = "status warn";
+      list.innerHTML = "";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+
+        const data = await res.json();
+
+        if (!data.subject_ids || data.subject_ids.length === 0) {
+          status.textContent = "⚠️ La galería está vacía.";
+          status.className = "status warn";
+          return;
+        }
+
+        status.textContent = `✅ ${data.subject_ids.length} rostros registrados`;
+        status.className = "status ok";
+
+        data.subject_ids
+          .sort()
+          .forEach(id => {
+            const li = document.createElement("li");
+            li.textContent = id;
+            list.appendChild(li);
+          });
+
+      } catch (err) {
+        status.textContent = "❌ Error al consultar la galería";
+        status.className = "status error";
+        console.error(err);
+      }
+    }
+  </script>
+
+</body>
+</html>
