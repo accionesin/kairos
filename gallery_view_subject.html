@@ -102,13 +102,13 @@
   <h1>👤 AiDi – Consulta de Identidad Digital</h1>
 
   <div class="card">
-    <label>Galería</label>
+    <label>Comunidad</label>
     <input id="gallery" value="acciones.in" />
 
-    <label>Subject ID</label>
+    <label>Identidad Digital</label>
     <input id="subject" placeholder="Ej: oscar_castro_594" />
 
-    <button onclick="consultar()">Consultar rostro</button>
+    <button onclick="consultar()">Consultar Identidad Digital</button>
 
     <div id="resultado"></div>
   </div>
@@ -120,11 +120,11 @@
       const result = document.getElementById("resultado");
 
       if (!gallery || !subject) {
-        result.innerHTML = `<div class="result error">⚠️ Debes ingresar galería y subject_id</div>`;
+        result.innerHTML = `<div class="result error">⚠️ Debes ingresar comunidad e Identidad Digital</div>`;
         return;
       }
 
-      result.innerHTML = `<div class="result">⏳ Consultando información del rostro…</div>`;
+      result.innerHTML = `<div class="result">⏳ Consultando información de la Identidad Digital…</div>`;
 
       try {
         const res = await fetch("https://kairos.clubempx.workers.dev/gallery_view_subject", {
