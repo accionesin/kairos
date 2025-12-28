@@ -107,7 +107,7 @@ export default {
       }
 
       // ======================================================
-      // 🗂️ GALLERY LIST ALL  ✅ (ARREGLADO)
+      // 🗂️ GALLERY LIST ALL
       // ======================================================
       if (path === "/gallery_list_all") {
         const r = await fetch("https://api.kairos.com/gallery/list_all", {
@@ -117,14 +117,13 @@ export default {
             "app_id": env.KAIROS_APP_ID,
             "app_key": env.KAIROS_APP_KEY
           }
-          // ⚠️ NO body
         });
 
         return new Response(await r.text(), { status: 200, headers: corsHeaders });
       }
 
       // ======================================================
-      // 📂 GALLERY VIEW (subjects en galería)
+      // 📂 GALLERY VIEW
       // ======================================================
       if (path === "/gallery_view") {
         const body = await request.json();
@@ -143,7 +142,38 @@ export default {
             "app_id": env.KAIROS_APP_ID,
             "app_key": env.KAIROS_APP_KEY
           },
-          body: JSON.stringify({ gallery_name: body.gallery_name })
+          body: JSON.stringify({
+            gallery_name: body.gallery_name
+          })
+        });
+
+        return new Response(await r.text(), { status: 200, headers: corsHeaders });
+      }
+
+      // ======================================================
+      // 🗑️ GALLERY REMOVE SUBJECT  ✅ NUEVO
+      // ======================================================
+      if (path === "/gallery_remove_subject") {
+        const body = await request.json();
+
+        if (!body.gallery_name || !body.subject_id) {
+          return new Response(
+            JSON.stringify({ error: "Missing gallery_name or subject_id" }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        const r = await fetch("https://api.kairos.com/gallery/remove_subject", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "app_id": env.KAIROS_APP_ID,
+            "app_key": env.KAIROS_APP_KEY
+          },
+          body: JSON.stringify({
+            gallery_name: body.gallery_name,
+            subject_id: body.subject_id
+          })
         });
 
         return new Response(await r.text(), { status: 200, headers: corsHeaders });
