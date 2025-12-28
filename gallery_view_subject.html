@@ -2,106 +2,129 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>👤 Acciones.in – Ver Rostro Registrado</title>
+  <title>👤 Acciones.in – Detalle de Rostro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
+      background: #0f172a;
+      color: #e5e7eb;
       padding: 20px;
     }
 
     h1 {
-      color: #222;
+      text-align: center;
+      color: #38bdf8;
     }
 
-    .box {
-      background: #fff;
+    .card {
+      background: #020617;
+      border-radius: 10px;
       padding: 20px;
-      border-radius: 8px;
-      max-width: 500px;
-      margin: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 520px;
+      margin: 20px auto;
+      box-shadow: 0 0 20px rgba(56,189,248,0.15);
     }
 
     label {
       display: block;
-      margin-top: 15px;
+      margin-top: 12px;
       font-weight: bold;
     }
 
     input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-top: 5px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+      border-radius: 6px;
+      border: none;
     }
 
     button {
       margin-top: 20px;
-      padding: 10px;
       width: 100%;
-      background: #111;
-      color: #fff;
+      padding: 12px;
+      border-radius: 6px;
       border: none;
-      border-radius: 4px;
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
       cursor: pointer;
     }
 
     button:hover {
-      background: #333;
+      background: #0ea5e9;
     }
 
-    pre {
-      background: #f0f0f0;
-      padding: 10px;
+    .result {
       margin-top: 20px;
-      border-radius: 4px;
-      white-space: pre-wrap;
-      word-break: break-word;
+      padding: 15px;
+      border-radius: 8px;
+      background: #020617;
+      border: 1px solid #1e293b;
     }
 
     .ok {
-      color: green;
+      color: #22c55e;
       font-weight: bold;
+      margin-bottom: 10px;
     }
 
     .error {
-      color: red;
+      color: #ef4444;
       font-weight: bold;
+    }
+
+    .field {
+      margin: 6px 0;
+    }
+
+    .label {
+      opacity: 0.7;
+      font-size: 0.9em;
+    }
+
+    pre {
+      margin-top: 15px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      overflow-x: auto;
     }
   </style>
 </head>
+
 <body>
 
-  <div class="box">
-    <h1>👤 Ver rostro registrado</h1>
+  <h1>👤 Detalle de rostro registrado</h1>
 
-    <label for="gallery">Galería</label>
+  <div class="card">
+    <label>Galería</label>
     <input id="gallery" value="acciones.in" />
 
-    <label for="subject">Subject ID</label>
-    <input id="subject" placeholder="Ej: LeonardoDelgado_905" />
+    <label>Subject ID</label>
+    <input id="subject" placeholder="Ej: oscar_castro_594" />
 
     <button onclick="consultar()">Consultar rostro</button>
 
-    <pre id="resultado"></pre>
+    <div id="resultado"></div>
   </div>
 
   <script>
     async function consultar() {
       const gallery = document.getElementById("gallery").value.trim();
       const subject = document.getElementById("subject").value.trim();
-      const output = document.getElementById("resultado");
-
-      output.textContent = "⏳ Consultando…";
+      const result = document.getElementById("resultado");
 
       if (!gallery || !subject) {
-        output.innerHTML = "⚠️ Debes ingresar galería y subject_id";
+        result.innerHTML = `<div class="result error">⚠️ Debes ingresar galería y subject_id</div>`;
         return;
       }
+
+      result.innerHTML = `<div class="result">⏳ Consultando información del rostro…</div>`;
 
       try {
         const res = await fetch("https://kairos.clubempx.workers.dev/gallery_view_subject", {
@@ -116,14 +139,44 @@
         const data = await res.json();
 
         if (data.Errors || data.errors) {
-          output.innerHTML = `<span class="error">❌ Rostro no encontrado</span>\n\n${JSON.stringify(data, null, 2)}`;
-        } else {
-          output.innerHTML = `<span class="ok">✅ Rostro encontrado</span>\n\n${JSON.stringify(data, null, 2)}`;
+          result.innerHTML = `
+            <div class="result error">
+              ❌ El rostro no existe en esta galería
+            </div>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+          return;
         }
 
+        const face = data.face_ids[0];
+        const fecha = parseKairosDate(face.enrollment_timestamp);
+
+        result.innerHTML = `
+          <div class="result">
+            <div class="ok">✅ Rostro registrado correctamente</div>
+
+            <div class="field"><span class="label">Galería:</span> ${gallery}</div>
+            <div class="field"><span class="label">Subject ID:</span> ${subject}</div>
+            <div class="field"><span class="label">Face ID:</span> ${face.face_id}</div>
+            <div class="field"><span class="label">Registrado el:</span> ${fecha}</div>
+
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          </div>
+        `;
+
       } catch (err) {
-        output.innerHTML = `<span class="error">❌ Error de conexión</span>\n${err.message}`;
+        result.innerHTML = `
+          <div class="result error">
+            ❌ Error de conexión con el sistema
+          </div>
+        `;
       }
+    }
+
+    function parseKairosDate(ts) {
+      if (!ts || ts.length !== 14) return "—";
+      return `${ts.substring(0,4)}-${ts.substring(4,6)}-${ts.substring(6,8)} 
+              ${ts.substring(8,10)}:${ts.substring(10,12)}:${ts.substring(12,14)}`;
     }
   </script>
 
