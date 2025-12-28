@@ -8,7 +8,7 @@ export default {
       "Content-Type": "application/json"
     };
 
-    // ---------- CORS preflight ----------
+    // 🔁 Preflight CORS
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -17,8 +17,9 @@ export default {
     }
 
     const url = new URL(request.url);
+    const path = url.pathname;
 
-    // ---------- Health check ----------
+    // ❤️ Health check
     if (request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -30,7 +31,6 @@ export default {
       );
     }
 
-    // ---------- Solo POST ----------
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({ error: "Only POST allowed" }),
@@ -41,17 +41,89 @@ export default {
     try {
       const body = await request.json();
 
-      if (!body.image) {
-        return new Response(
-          JSON.stringify({ error: "Missing image" }),
-          { status: 400, headers: corsHeaders }
+      // =====================================================
+      // 🔍 DETECT (YA EXISTENTE)
+      // =====================================================
+      if (path === "/detect") {
+
+        if (!body.image) {
+          return new Response(
+            JSON.stringify({ error: "Missing image URL" }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        const kairosResponse = await fetch(
+          "https://api.kairos.com/detect",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "app_id": env.KAIROS_APP_ID,
+              "app_key": env.KAIROS_APP_KEY
+            },
+            body: JSON.stringify({ image: body.image })
+          }
         );
+
+        const data = await kairosResponse.json();
+
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: corsHeaders
+        });
       }
 
-      // ======================================================
-      // 🆕 RECOGNIZE
-      // ======================================================
-      if (url.pathname === "/recognize") {
+      // =====================================================
+      // 🧠 ENROLL (YA EXISTENTE)
+      // =====================================================
+      if (path === "/enroll") {
+
+        const { image, subject_id } = body;
+
+        if (!image || !subject_id) {
+          return new Response(
+            JSON.stringify({ error: "Missing image or subject_id" }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        const kairosResponse = await fetch(
+          "https://api.kairos.com/enroll",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "app_id": env.KAIROS_APP_ID,
+              "app_key": env.KAIROS_APP_KEY
+            },
+            body: JSON.stringify({
+              image,
+              subject_id,
+              gallery_name: "acciones.in"
+            })
+          }
+        );
+
+        const data = await kairosResponse.json();
+
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: corsHeaders
+        });
+      }
+
+      // =====================================================
+      // 🧬 RECOGNIZE (YA EXISTENTE)
+      // =====================================================
+      if (path === "/recognize") {
+
+        if (!body.image) {
+          return new Response(
+            JSON.stringify({ error: "Missing image URL" }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
 
         const kairosResponse = await fetch(
           "https://api.kairos.com/recognize",
@@ -69,37 +141,48 @@ export default {
           }
         );
 
-        const kairosData = await kairosResponse.json();
+        const data = await kairosResponse.json();
 
-        return new Response(
-          JSON.stringify(kairosData),
-          { status: 200, headers: corsHeaders }
-        );
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: corsHeaders
+        });
       }
 
-      // ======================================================
-      // 🔥 DETECT (funcional, NO TOCAR)
-      // ======================================================
-      const kairosResponse = await fetch(
-        "https://api.kairos.com/detect",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "app_id": env.KAIROS_APP_ID,
-            "app_key": env.KAIROS_APP_KEY
-          },
-          body: JSON.stringify({
-            image: body.image
-          })
-        }
-      );
+      // =====================================================
+      // 📂 GALLERY LIST ALL (NUEVO)
+      // =====================================================
+      if (path === "/gallery/list") {
 
-      const kairosData = await kairosResponse.json();
+        const kairosResponse = await fetch(
+          "https://api.kairos.com/gallery/list_all",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "app_id": env.KAIROS_APP_ID,
+              "app_key": env.KAIROS_APP_KEY
+            },
+            body: JSON.stringify({
+              gallery_name: "acciones.in"
+            })
+          }
+        );
 
+        const data = await kairosResponse.json();
+
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: corsHeaders
+        });
+      }
+
+      // =====================================================
+      // ❌ ENDPOINT NO ENCONTRADO
+      // =====================================================
       return new Response(
-        JSON.stringify(kairosData),
-        { status: 200, headers: corsHeaders }
+        JSON.stringify({ error: "Endpoint not found" }),
+        { status: 404, headers: corsHeaders }
       );
 
     } catch (err) {
