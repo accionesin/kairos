@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📊 Acciones.in – Analytics</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: 20px auto;
+      box-shadow: 0 0 20px rgba(56,189,248,0.15);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    .result {
+      margin-top: 20px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .ok {
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    pre {
+      margin-top: 10px;
+      font-size: 0.85em;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📊 Analytics del sistema</h1>
+
+<div class="card">
+  <label>Galería (opcional)</label>
+  <input id="gallery" value="acciones.in">
+
+  <label>Fecha inicio (YYYY-MM-DD)</label>
+  <input id="start">
+
+  <label>Fecha fin (YYYY-MM-DD)</label>
+  <input id="end">
+
+  <button onclick="consultar()">Consultar analytics</button>
+
+  <div id="resultado"></div>
+</div>
+
+<script>
+async function consultar() {
+  const gallery = document.getElementById("gallery").value.trim();
+  const start = document.getElementById("start").value.trim();
+  const end = document.getElementById("end").value.trim();
+  const result = document.getElementById("resultado");
+
+  result.innerHTML = "⏳ Consultando métricas del sistema…";
+
+  const payload = {};
+  if (gallery) payload.gallery_name = gallery;
+  if (start) payload.start_date = start;
+  if (end) payload.end_date = end;
+
+  try {
+    const res = await fetch("https://kairos.clubempx.workers.dev/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    result.innerHTML = `
+      <div class="result">
+        <div class="ok">✅ Analytics disponibles</div>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      </div>
+    `;
+
+  } catch (err) {
+    result.innerHTML = "❌ Error al consultar analytics";
+  }
+}
+</script>
+
+</body>
+</html>
