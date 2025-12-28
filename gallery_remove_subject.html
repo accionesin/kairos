@@ -66,18 +66,18 @@
 <h1>🗑️ AiDi – Eliminar Identidad Digital</h1>
 
 <div class="card">
-  <label>📁 Galería:</label>
+  <label>📁 Comunidad:</label>
   <input type="text" id="galleryName" value="acciones.in" />
 
-  <label>🆔 Subject ID:</label>
+  <label>🆔 Identidad Digital:</label>
   <input type="text" id="subjectId" placeholder="Ej: JuanPerez_003" />
 
   <div class="warning">
-    ⚠️ ¿Estás seguro de eliminar este rostro?<br>
+    ⚠️ ¿Estás seguro de eliminar esta Identidad Digital?<br>
     Esta acción no se puede deshacer.
   </div>
 
-  <button onclick="confirmRemove()">Eliminar rostro</button>
+  <button onclick="confirmRemove()">Eliminar Identidad Digital</button>
 </div>
 
 <div id="result" class="card" style="display:none;"></div>
@@ -89,18 +89,18 @@ async function confirmRemove() {
   const result = document.getElementById("result");
 
   if (!gallery || !subject) {
-    alert("Debes ingresar la galería y el subject_id");
+    alert("Debes ingresar la comunidad y el subject_id");
     return;
   }
 
   const confirmed = confirm(
-    `¿Estás seguro de eliminar el rostro:\n\n${subject}\n\nde la galería:\n${gallery}?`
+    `¿Estás seguro de eliminar la Identidad Digital:\n\n${subject}\n\nde la galería:\n${gallery}?`
   );
 
   if (!confirmed) return;
 
   result.style.display = "block";
-  result.innerHTML = "⏳ Eliminando rostro...";
+  result.innerHTML = "⏳ Eliminando Identidad Digital...";
 
   try {
     const res = await fetch(
@@ -123,7 +123,7 @@ async function confirmRemove() {
     }
 
     result.innerHTML = `
-      <div class="ok">✅ Rostro eliminado correctamente</div>
+      <div class="ok">✅ Identidad Digital eliminada correctamente</div>
       <p><strong>Galería:</strong> ${gallery}</p>
       <p><strong>ID eliminado:</strong> ${subject}</p>
     `;
