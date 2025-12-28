@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>🗑️ Acciones.in – Eliminar Rostro</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #f87171;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(248,113,113,0.15);
+    }
+
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #ef4444;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #dc2626;
+    }
+
+    .warning {
+      color: #facc15;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .ok {
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    .err {
+      color: #ef4444;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🗑️ Acciones.in – Eliminar Rostro</h1>
+
+<div class="card">
+  <label>📁 Galería:</label>
+  <input type="text" id="galleryName" value="acciones.in" />
+
+  <label>🆔 Subject ID:</label>
+  <input type="text" id="subjectId" placeholder="Ej: JuanPerez_003" />
+
+  <div class="warning">
+    ⚠️ ¿Estás seguro de eliminar este rostro?<br>
+    Esta acción no se puede deshacer.
+  </div>
+
+  <button onclick="confirmRemove()">Eliminar rostro</button>
+</div>
+
+<div id="result" class="card" style="display:none;"></div>
+
+<script>
+async function confirmRemove() {
+  const gallery = document.getElementById("galleryName").value.trim();
+  const subject = document.getElementById("subjectId").value.trim();
+  const result = document.getElementById("result");
+
+  if (!gallery || !subject) {
+    alert("Debes ingresar la galería y el subject_id");
+    return;
+  }
+
+  const confirmed = confirm(
+    `¿Estás seguro de eliminar el rostro:\n\n${subject}\n\nde la galería:\n${gallery}?`
+  );
+
+  if (!confirmed) return;
+
+  result.style.display = "block";
+  result.innerHTML = "⏳ Eliminando rostro...";
+
+  try {
+    const res = await fetch(
+      "https://kairos.clubempx.workers.dev/gallery_remove_subject",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gallery_name: gallery,
+          subject_id: subject
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.Errors) {
+      result.innerHTML = `<div class="err">❌ Error al eliminar rostro</div>`;
+      return;
+    }
+
+    result.innerHTML = `
+      <div class="ok">✅ Rostro eliminado correctamente</div>
+      <p><strong>Galería:</strong> ${gallery}</p>
+      <p><strong>ID eliminado:</strong> ${subject}</p>
+    `;
+
+  } catch (err) {
+    result.innerHTML = `<div class="err">❌ Error al contactar el sistema</div>`;
+  }
+}
+</script>
+
+</body>
+</html>
