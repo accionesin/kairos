@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔍 Acciones.in – Detección de in-prendedores</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(56,189,248,0.15);
+    }
+
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    img {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+    }
+
+    .ok { color: #22c55e; font-weight: bold; }
+    .warn { color: #facc15; }
+    .err { color: #ef4444; }
+  </style>
+</head>
+
+<body>
+
+<h1>🔍 Acciones.in – Analizar rostro</h1>
+
+<div class="card">
+
+  <!-- EXISTENTE -->
+  <label>📎 Adjuntar imagen:</label>
+  <input type="file" id="imageFile" accept="image/*" onchange="handleFile(this.files[0])">
+
+  <!-- NUEVO (CÁMARA) -->
+  <label>📷 Tomar foto:</label>
+  <input type="file"
+         id="cameraInput"
+         accept="image/*"
+         capture="environment"
+         onchange="handleFile(this.files[0])">
+
+  <!-- EXISTENTE -->
+  <label>🔗 O URL pública:</label>
+  <input type="text" id="imageUrl" placeholder="https://...">
+
+  <button onclick="analyze()">Analizar rostro</button>
+
+  <img id="preview" style="display:none;">
+</div>
+
+<div id="result" class="card" style="display:none;"></div>
+
+<script>
+let imagePayload = "";
+
+function handleFile(file) {
+  if (!file) return;
+
+  toBase64(file).then(base64 => {
+    imagePayload = base64;
+    showPreview(URL.createObjectURL(file));
+  });
+}
+
+async function analyze() {
+  const url = document.getElementById("imageUrl").value.trim();
+  const result = document.getElementById("result");
+
+  result.style.display = "block";
+  result.innerHTML = "⏳ Analizando imagen...";
+
+  if (!imagePayload && url) {
+    imagePayload = url;
+    showPreview(url);
+  }
+
+  if (!imagePayload) {
+    result.innerHTML = "⚠️ Debes adjuntar una imagen, tomar una foto o ingresar una URL.";
+    return;
+  }
+
+  const res = await fetch("https://kairos.clubempx.workers.dev/detect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: imagePayload })
+  });
+
+  const data = await res.json();
+
+  if (!data.images || data.images.length === 0) {
+    result.innerHTML = "❌ No se detectaron rostros.";
+    return;
+  }
+
+  result.innerHTML = `
+    <div class="ok">✅ Análisis completado</div>
+    <pre>${JSON.stringify(data.images[0].faces, null, 2)}</pre>
+  `;
+}
+
+function showPreview(src) {
+  const img = document.getElementById("preview");
+  img.src = src;
+  img.style.display = "block";
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+
+</body>
+</html>
